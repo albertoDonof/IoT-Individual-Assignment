@@ -89,6 +89,22 @@ It simply sends to a specific topic called ping_topic a message with the current
 
 ### Communicate the aggregate value to the cloud
 
-We trasmit the average value using lora , we use the lora router present at DIAG to correctly receive the message on The Things Network
+We trasmit the average value using lora , we use the lora router present at DIAG to correctly receive the message on The Things Network. 
+
+Using the EzLoraWan library we establish a connection with the ttn server via lora providing the devEUI , AppEUI and appKey registered on the TTN console to recognize our device.  Every 10 seconds of delay we send the message containing our average value and we set up our callback function to print the message in case of downlink communication.
+
+
+### Communication cost
+
+I used this command to track all the networks operations on the port 8883 that is used by mqtt:
+
+![alt text](images/tcpdump_command.png)
+
+This saves the traffic network registered in the mqtt.pcap file that can be opened with wireshark to analyze the data.
+
+![alt text](images/wireshark.png)
+
+The communication registered by tcpdump consists of sending the average value from the esp32 board to the edge device and as soon as the broker receives the message to forward to all the subscribers the message goes also back to the board that prints the value. This occupies 44 packets of communication , given many acknowledgments done by tsl protocol to encrypt communication , while the application data packets are on average of 100bytes.
+
 
 ## Setup Guide

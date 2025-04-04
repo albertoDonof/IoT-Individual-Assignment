@@ -56,6 +56,8 @@ void round_trip_time(void *pvParameters){
   }
 }
 
+bool onetime = false;
+
 void mqtt_send_average(void *pvParameters) {
   while(1){
     delay(10);
@@ -66,16 +68,18 @@ void mqtt_send_average(void *pvParameters) {
     client.loop();
 
     long now = millis();
-    if (now - lastMsg > 10000) {
+    if (now - lastMsg > 10000 && !onetime) {
       lastMsg = now;
     
       snprintf (msg, MSG_BUFFER_SIZE, "%.2f", average_value);
       Serial.print("Publish message: ");
       Serial.println(msg);
       result = client.publish("donofrio/individual/average", msg);
+      //onetime = true;
       
       //Serial.println(result);
     }
+
   }
   
 }

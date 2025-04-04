@@ -45,7 +45,7 @@ void loraSendAverage(void *pvParameters){
 		}
     
     // Give some time before deleting the task (optional)
-    vTaskDelay(5000); // Delay for 100 ms
+    vTaskDelay(10000); // Delay for 10 s
 
   }
 
