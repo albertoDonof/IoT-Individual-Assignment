@@ -23,7 +23,7 @@ void maxSamplingFrequency(void *pvParameters){
     // Obtain the end time in microseconds
     int64_t end_time = esp_timer_get_time();
 
-    S
+    int maximum_frequency = (int)(count / ((end_time - start_time) / 1000000.0));
 
     // Calculate the maximum sampling frequency:
     // Divide the total count of samples by the elapsed time (in seconds) to get the frequency in Hz, remembering that the time is in microseconds
