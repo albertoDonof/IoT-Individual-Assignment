@@ -12,12 +12,11 @@
 #include "compute_average.h"
 #include "communication.h"
 
+bool doingBonus = true;
+bool doingDeepSleepMode = true; 
 
-/*
-To do:  a task to compute average in fixed time window , then send the average through mqtt or lora and finally 
-enter deep sleep with a timer of like 10 seconds , and after start again computing the average because before we saved 
-in rtc variables if we have already done FFT and maxSampling Frequency since that will not be resetted as the other variables
-*/
+bool doingLora = false; // if doing sleep mode is set to true than this is ignored
+bool useOverSamplingFrequency = false;
 
 void setup() {
   Serial.begin(115200);
@@ -27,17 +26,49 @@ void setup() {
 
   createQueues();
 
-
-  maxSamplingFrequency();
+  if( getIsFFTComputed()==false){
+    maxSamplingFrequency();
   
-  delay(10);
-  maxFrequencyInputSignal();
+    delay(10);
 
-  delay(10);
+    if(doingBonus){
+
+      Serial.println("Start FFT computation for signal bonus1 2.0 *sin(2 * PI * 10 * t) + sin( 2 * PI * 50 * t) + 5.0 * sin( 2 * PI * 8 * t) : ");
+      maxFrequencyInputSignal(input_signal_bonus1, true);
+
+      Serial.println("Start FFT computation for signal bonus2 2.0*sin(2 * PI * 3 * t) + 3.0 * sin( 2 * PI * 250 * t) : ");
+      maxFrequencyInputSignal(input_signal_bonus2, true);
+    }
+
+    if(!useOverSamplingFrequency){
+      maxFrequencyInputSignal(input_signal, false);
+    }
   
-  xTaskCreate( aggregateFunction, "aggregateFunction", 2048 , NULL, 2 ,NULL);
+    delay(10);  
 
-  xTaskCreate( mqtt_send_average, "mqtt_send_average", 5012, NULL, 1 , NULL);
+  }
+  
+
+  if(doingDeepSleepMode){
+
+    xTaskCreate( aggregateFunctionSleep, "aggregateFunctionSleep", 2048 , NULL, 2 ,NULL);
+    
+    xTaskCreate( mqtt_send_average_sleep, "mqtt_send_average_sleep", 5012, NULL, 1 , NULL);
+
+  } else{
+
+    xTaskCreate( aggregateFunction, "aggregateFunction", 2048 , NULL, 2 ,NULL);
+
+    if(doingLora){
+      
+      xTaskCreate( loraSendAverage, "loraSendAverage", 5012, NULL, 1 , NULL);
+    } else{
+      xTaskCreate( mqtt_send_average, "mqtt_send_average", 5012, NULL, 1 , NULL);
+    }
+
+    
+  }
+  
 
 }
 

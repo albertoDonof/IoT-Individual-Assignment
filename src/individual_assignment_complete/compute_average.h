@@ -5,7 +5,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-float computeAverageOverWindow(double samplingFrequency, uint16_t time_window);
+float computeAverageOverWindow(double samplingFrequency, uint16_t time_window, float (*signal_input)(float));
 void aggregateFunction(void *PvParameters);
+void aggregateFunctionSleep(void *PvParameters);
 
 #endif

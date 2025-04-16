@@ -14,19 +14,20 @@ double vImag[samples];
 #define SCL_FREQUENCY 0x02
 #define SCL_PLOT 0x03
 
-void maxFrequencyInputSignal(){
+void maxFrequencyInputSignal(float (*signal_input)(float), bool isBonus){
   double samplingFrequency = (double) getSamplingFrequency();
 
   ArduinoFFT<double> FFT = ArduinoFFT<double>(vReal, vImag, samples, samplingFrequency);
 
-  float delay_between_samples = (1/samplingFrequency) * 1000;
+  float delay_between_samples = (1/samplingFrequency) * 1000; //in milliseconds
 
   /* Input signal: 2*sin(2π*3*t) + 4*sin(2π*5*t) */
-  double ratio3 = 2 * PI * 3 / samplingFrequency;  // Fraction of a complete cycle stored at each sample (in radians)
-  double ratio5 = 2 * PI * 5 / samplingFrequency;
+  //double ratio3 = 2 * PI * 3 / samplingFrequency;  // Fraction of a complete cycle stored at each sample (in radians)
+  //double ratio5 = 2 * PI * 5 / samplingFrequency;
 
   for (uint16_t i = 0; i < samples; i++) {
-    vReal[i] = (amplitude * (2.0 * sin(i * ratio3) + 4.0 * sin(i * ratio5)) ); /* Build data with positive and negative values*/
+    float time = i / samplingFrequency;
+    vReal[i] = (amplitude * signal_input(time)); /* Build data with positive and negative values*/
     vImag[i] = 0.0; // Imaginary part must be zeroed in case of looping to avoid wrong calculations and overflows
   
     delay(delay_between_samples);
@@ -48,20 +49,26 @@ void maxFrequencyInputSignal(){
   PrintVector(vReal, (samples >> 1), SCL_FREQUENCY, samplingFrequency);
 
   /* Find max frequency */
-  double peakFrequency = findLastPeakFrequencyWithInterpolation(vReal, (samples >> 1), samplingFrequency);
+  double maxFrequency = findLastPeakFrequencyWithInterpolation(vReal, (samples >> 1), samplingFrequency);
   Serial.print("Max Frequency (greatest frequency corresponding to a peak) of input signal: ");
-  Serial.println(peakFrequency, 2);
+  Serial.println(maxFrequency, 2);
   Serial.print("Optimal sampling Frequency: ");
-  Serial.println( round(peakFrequency * 2) , 2);
+  Serial.println( round(maxFrequency * 2) , 2);
 
-  setSamplingFrequency( round(peakFrequency * 2) );
-    
+
+  if(!isBonus){
+    setSamplingFrequency( round(maxFrequency * 2) );
+
+    setIsFFTComputed();
+  }
+  
     
   //vTaskDelay(10000000); // Repeat every 10 seconds
 }
 
 float findLastPeakFrequencyWithInterpolation(const double* magnitudes, int numBins, float samplingFreq) {
-    const float threshold = 0.3;
+    //const float threshold = 0.3;
+    const float threshold = 0.2;
     const int minPeakDistance = 2;
     
     float maxMagnitude = 0.0;
@@ -76,6 +83,8 @@ float findLastPeakFrequencyWithInterpolation(const double* magnitudes, int numBi
     
     // Find peaks with parabolic interpolation
     for (int i = 1; i < numBins - 1; i++) {
+
+        // we check if this is a peak and if it's magnitude is at least > than 30% of the max magnitude
         if (magnitudes[i] > magnitudes[i-1] && magnitudes[i] > magnitudes[i+1] &&
             magnitudes[i] > (maxMagnitude * threshold)) {
             

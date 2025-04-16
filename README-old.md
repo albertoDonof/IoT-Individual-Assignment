@@ -38,7 +38,7 @@ int maximum_frequency = (int)(count / ((end_time - start_time) / 1000000.0));
 
 I divided by 1000000.0 because the functions to get the time gives a microseconds value and i need to convert it in seconds.
 
-![alt text](images/image.png)
+![alt text](images-old/maximumSampl.png)
 
 The result of this computation is 1000Hz that corrsiponds to the simulated maximum frequency of my device.
 
@@ -50,11 +50,11 @@ So i used the ArduinoFFT library to compute the majorPeak in the frequency domai
 
 Since we are generating the signal internally we have a discrete time sampling of our signal and so the time is represented as t=i/Fs where i is the sample number and Fs is the frequency of sampling. So the two ratios corresponding to the two sinusoids in input are in the form of: ratio=2*PI*Fi / Fs ,as you can see in the code:
 
-![alt text](images/ratios.png)
+![alt text](images-old/ratios.png)
 
 The result of the computation that is the maximum frequency of our input signal is 5.67Hz and that is what we expected. Given this we can compute the optimal Sampling Frequency with the Sampling Theorem that gives that the mimum sampling rate of a signal to be uniformly sampled to reconstruct correctly the original signal is > 2 * Fmax  , in our case 2* 5.67Hz = 11Hz rounded.
 
-![alt text](images/optimalFrequency.png)
+![alt text](images-old/optimalFrequency.png)
 
 
 ### Compute aggregate function over a window
@@ -67,7 +67,7 @@ int samples = (int)(samplingFrequency * time_window);
 
 Then we sum each iteration and we keep count of how many iteration we are doing to compute at the end the average value of our signal in a time window of 5 seconds that is:
 
-![alt text](images/average_value.png)
+![alt text](images-old/average_value.png)
 
 As expected the average value is 0 because we are generating sinusoidal signal with positive and negative values that eventually will cancel each other.
 
@@ -77,13 +77,13 @@ To communicate the aggregate value to the nearby server we use mqtt and in parti
 
 We have two main tasks in the file .ino , the first is void mqtt_send_average to send to this topic: "donofrio/individual/average" the average value computed before and for debug reasons we are also subscribed to this topic. In this topic the value is sended every 10 seconds and the result is this:
 
-![alt text](images/send_average.png)
+![alt text](images-old/send_average.png)
 
 I also setup a little nodejs server that connects to the mqtt broker , using the same certificates needed for the connection and this server simply subscribes to the same topic and prints the value received.
 
 The other task we have in the ino file is void round_trip_time , that is used to calculate the end-to-end latency od the system , between the board and the edge server. The result of this task is the Round Trip Time as below:
 
-![alt text](images/rtt.png)
+![alt text](images-old/rtt.png)
 
 It simply sends to a specific topic called ping_topic a message with the current timestamp measured by the board , then when the edge server receives the message simply sends immediatly a message on another topic called response_topic. Our board is subscribed to this last topic and so as soon as it receives a message first checks if the value of the message is the same timestamp that he sended , and then calculates the round trip time with the difference between the time in which he sended the message and the time when he recived this other message.
 
@@ -98,11 +98,11 @@ Using the EzLoraWan library we establish a connection with the ttn server via lo
 
 I used this command to track all the networks operations on the port 8883 that is used by mqtt:
 
-![alt text](images/tcpdump_command.png)
+![alt text](images-old/tcpdump_command.png)
 
 This saves the traffic network registered in the mqtt.pcap file that can be opened with wireshark to analyze the data.
 
-![alt text](images/wireshark.png)
+![alt text](images-old/wireshark.png)
 
 The communication registered by tcpdump consists of sending the average value from the esp32 board to the edge device and as soon as the broker receives the message to forward to all the subscribers the message goes also back to the board that prints the value. This occupies 44 packets of communication , given many acknowledgments done by tsl protocol to encrypt communication , while the application data packets are on average of 100bytes.
 

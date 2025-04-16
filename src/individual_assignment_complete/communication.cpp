@@ -35,6 +35,61 @@ int result= 0;
 
 
 /*  START MQTT FUNCTIONS  */
+
+void mqtt_lora_send_average(void* pvParameters) {
+  delay(10);
+  float average_value = 0.0;
+
+   while(1) {
+    // Receive from average queue (block if empty)
+    if(xQueueReceive(averageValueQueue, &average_value, portMAX_DELAY) == pdTRUE) {
+      
+      if (!isConnected || WiFi.status() != WL_CONNECTED) {
+        setupMain();
+        isConnected = true;
+      }
+
+      if (!client.connected()) {
+        mqttReconnect();
+      }
+      //client.loop();
+
+      long now = millis();
+      if (now - lastMsg > 1000 ) {
+        lastMsg = now;
+
+        snprintf(msg, MSG_BUFFER_SIZE, "%.2f", average_value);
+        Serial.print("Publish message: ");
+        Serial.println(msg);
+        result = client.publish("donofrio/individual/average", msg);
+
+        client.disconnect();        
+        //Serial.println(result);
+        WiFi.disconnect();
+      }    
+
+      vTaskDelay(100 );
+
+      if (!isLoraConnected) {
+        setupLoraConn();
+        isLoraConnected = true;
+      }
+
+      lpp.reset();
+      lpp.addDigitalInput(1, (int) average_value);
+      if (ttn.sendBytes(lpp.getBuffer(), lpp.getSize()))
+      {
+        Serial.printf("Average value: %f TTN_CayenneLPP: %d %x %02X%02X\n", (double) average_value, lpp.getBuffer()[0], lpp.getBuffer()[1],
+          lpp.getBuffer()[2], lpp.getBuffer()[3]);
+      }
+      
+      vTaskDelay(2000 );
+
+    }
+  }
+  
+}
+
 void mqtt_send_average(void* pvParameters) {
   delay(10);
   float average_value = 0.0;
@@ -69,6 +124,54 @@ void mqtt_send_average(void* pvParameters) {
     }
   }
   
+}
+
+void mqtt_send_average_sleep(void* pvParameters) {
+  delay(10);
+  float average_value = 0.0;
+
+   while(1) {
+    // Receive from average queue (block if empty)
+    if(xQueueReceive(averageValueQueue, &average_value, portMAX_DELAY) == pdTRUE) {
+      
+      if (!isConnected || WiFi.status() != WL_CONNECTED) {
+        setupMain();
+        isConnected = true;
+      }
+
+      if (!client.connected()) {
+        mqttReconnect();
+      }
+      //client.loop();
+
+      long now = millis();
+      if (now - lastMsg > 1000 ) {
+        lastMsg = now;
+
+        snprintf(msg, MSG_BUFFER_SIZE, "%.2f", average_value);
+        Serial.print("Publish message: ");
+        Serial.println(msg);
+        result = client.publish("donofrio/individual/average", msg);
+
+        client.disconnect();        
+        //Serial.println(result);
+        enter_deep_sleep();
+
+        vTaskDelete(NULL);
+      }    
+      
+    }
+  }
+}
+
+void enter_deep_sleep(){
+   //Set timer to 10 seconds
+  esp_sleep_enable_timer_wakeup(Time_To_Sleep * S_To_uS_Factor);
+  Serial.println("Setup ESP32 to sleep for " + String(Time_To_Sleep) +
+  " Seconds");
+
+  //Go to sleep now
+  esp_deep_sleep_start();
 }
 
 void round_trip_time(void *pvParameters){
@@ -149,12 +252,11 @@ void mqttReconnect() {
     Serial.print("Attempting MQTT connection...");
     long r = random(1000);
     sprintf(clientId, "clientId-%ld", r);
-    // to connect to adafruit
-    // if (client.connect(clientId,SECRET_MQTT_USER, SECRET_MQTT_API_KEY)) {
+    
     if (client.connect(clientId)) {
       Serial.print(clientId);
       Serial.println(" connected");
-      client.subscribe("donofrio/individual/average");
+      //client.subscribe("donofrio/individual/average");
       client.subscribe("donofrio/individual/response");
     } else {
       Serial.print("failed, rc=");
@@ -209,7 +311,7 @@ void loraSendAverage(void *pvParameters){
     // Receive from average queue (block if empty)
     if(xQueueReceive(averageValueQueue, &average_value, portMAX_DELAY) == pdTRUE) {
 
-       if (!isLoraConnected) {
+      if (!isLoraConnected) {
         setupLoraConn();
         isLoraConnected = true;
       }

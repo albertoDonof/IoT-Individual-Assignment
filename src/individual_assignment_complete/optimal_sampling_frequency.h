@@ -8,7 +8,7 @@
 
 
 //void maxFrequencyInputSignal(void *pvParameters);
-void maxFrequencyInputSignal();
+void maxFrequencyInputSignal(float (*signal_input)(float), bool isBonus);
 
 float findLastPeakFrequencyWithInterpolation(const double* magnitudes, int numBins, float samplingFreq);
 void PrintVector(double *vData, uint16_t bufferSize, uint8_t scaleType, float samplingFreq);

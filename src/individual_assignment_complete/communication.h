@@ -16,7 +16,11 @@
 #endif // !AUTO_PINS
 
 void mqtt_send_average(void* pvParameters);
+void mqtt_send_average_sleep(void* pvParameters);
+void mqtt_lora_send_average(void* pvParameters);
 void round_trip_time(void *pvParameters);
+
+void enter_deep_sleep();
 
 void setupMain();
 void wifiConnect();
