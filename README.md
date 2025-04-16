@@ -18,6 +18,8 @@ The requirements needed to solve the assignment are:
 
 ## Technical Details
 
+The source files for this assignment are in the src/individual_assignment_complete folder.
+
 ### Input Signal
 For this assignment i choosed to simulate the input signal with the firmware of my esp32 board. The input signal i generated is composed by two sine waves with different frequencies and it's the following:
 ```
