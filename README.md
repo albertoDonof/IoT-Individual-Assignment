@@ -113,6 +113,10 @@ To activate the lora communication instead of the mqtt server we have to set the
 
 To measure energy consumption i used a second esp32 board as the monitor and i've done multiple runs: one using  sampling of input signal to compute the average with a delay of 10 seconds in between computations and send the value to mqtt server , an other one with the original over-sampled frequency to compute the average and the last one with the board entering deep sleep after sending the average value.
 
+Below there is the circuit to measure the power consumption: 
+
+![alt text](images/circuit.jpeg)
+
 First we have the results of the computation using the sampling of average with an arbitrary delay:
 
 ![alt text](images/average_send_cons.png)
